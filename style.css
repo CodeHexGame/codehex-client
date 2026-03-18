@@ -1,0 +1,946 @@
+/**
+ * style.css — Global styles, dark theme, CSS variables
+ * Dependencies: none
+ * Applies scenario theme via CSS custom properties (--scenario-*)
+ */
+
+/* === CSS Variables === */
+:root {
+  --primary:   var(--scenario-primary,   #1a1a2e);
+  --secondary: var(--scenario-secondary, #16213e);
+  --accent:    var(--scenario-accent,    #0f3460);
+  --text:      #e0e0e0;
+  --text-dim:  #888888;
+  --danger:    #e94560;
+  --success:   #4caf50;
+  --warning:   #ff9800;
+
+  --panel-bg:     rgba(22, 33, 62, 0.92);
+  --panel-border: rgba(15, 52, 96, 0.6);
+  --panel-radius: 6px;
+}
+
+/* === Reset === */
+*, *::before, *::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: var(--primary);
+  color: var(--text);
+  font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* === App container === */
+#app {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+/* === Canvas layers === */
+#canvas-game,
+#canvas-fog,
+#canvas-debug {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#canvas-game  { z-index: 1; }
+#canvas-fog   { z-index: 2; pointer-events: none; }
+#canvas-debug { z-index: 3; pointer-events: none; }
+
+/* === UI layer (over canvas) === */
+#ui {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 4;
+  pointer-events: none;
+}
+
+#ui > * {
+  pointer-events: auto;
+}
+
+/* === Login screen === */
+#login-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  z-index: 100;
+}
+
+#login-screen .login-title {
+  font-size: 48px;
+  font-weight: bold;
+  margin-bottom: 4px;
+  color: var(--text);
+}
+
+#login-screen .login-subtitle {
+  font-size: 16px;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+#login-screen .login-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 320px;
+}
+
+#login-screen .login-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--text-dim);
+}
+
+#login-screen .login-form input {
+  padding: 8px 12px;
+  background: var(--secondary);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 14px;
+  outline: none;
+}
+
+#login-screen .login-form input:focus {
+  border-color: var(--accent);
+}
+
+#login-screen .login-btn {
+  padding: 10px;
+  background: var(--accent);
+  border: none;
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 15px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+#login-screen .login-btn:hover {
+  filter: brightness(1.2);
+}
+
+#login-screen .login-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+#login-screen .recent-servers {
+  margin-top: 20px;
+  width: 320px;
+}
+
+#login-screen .recent-servers h3 {
+  font-size: 13px;
+  color: var(--text-dim);
+  margin-bottom: 6px;
+}
+
+#login-screen .recent-servers ul {
+  list-style: none;
+}
+
+#login-screen .recent-servers li {
+  padding: 4px 0;
+  color: var(--text);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+#login-screen .recent-servers li:hover {
+  color: var(--success);
+}
+
+#login-screen .login-status {
+  margin-top: 16px;
+  font-size: 13px;
+  color: var(--text-dim);
+  min-height: 20px;
+}
+
+/* === Loading bar === */
+#loading-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--primary);
+  z-index: 99;
+}
+
+#loading-screen .progress-bar-container {
+  width: 320px;
+  height: 8px;
+  background: var(--secondary);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-top: 16px;
+}
+
+#loading-screen .progress-bar-fill {
+  width: 0%;
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.2s ease;
+}
+
+#loading-screen .loading-text {
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+/* === Game screen (hidden until connected) === */
+#game-screen {
+  display: none;
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+/* === Generic panel style === */
+.panel {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 10px 14px;
+  color: var(--text);
+  font-size: 13px;
+  backdrop-filter: blur(4px);
+}
+
+/* === Resources panel (top-left) === */
+#panel-resources {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  display: flex;
+  gap: 14px;
+  white-space: nowrap;
+}
+
+#panel-resources .resource-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+#panel-resources .resource-icon {
+  width: 18px;
+  height: 18px;
+  object-fit: contain;
+}
+
+/* === Status panel (top-right) === */
+#panel-status {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  text-align: right;
+}
+
+#panel-status .status-line {
+  margin-bottom: 2px;
+}
+
+/* === Selection panel (bottom-left) === */
+#panel-selection {
+  position: absolute;
+  bottom: 50px;
+  left: 10px;
+  max-width: 420px;
+  min-width: 300px;
+  display: none;
+}
+
+#panel-selection .sel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-size: 15px;
+  font-weight: bold;
+}
+
+#panel-selection .sel-close {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+#panel-selection .sel-close:hover {
+  color: var(--text);
+}
+
+#panel-selection .hp-bar {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  margin: 4px 0;
+  overflow: hidden;
+}
+
+#panel-selection .hp-bar-fill {
+  height: 100%;
+  background: var(--success);
+  transition: width 0.3s ease;
+}
+
+#panel-selection .hp-bar-fill.low {
+  background: var(--danger);
+}
+
+#panel-selection .hp-bar-fill.medium {
+  background: var(--warning);
+}
+
+#panel-selection .sel-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  margin: 6px 0;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+#panel-selection .sel-stats span {
+  color: var(--text);
+}
+
+#panel-selection .sel-vars {
+  background: rgba(0,0,0,0.3);
+  border-radius: 4px;
+  padding: 6px 8px;
+  font-family: monospace;
+  font-size: 11px;
+  color: var(--text-dim);
+  margin: 6px 0;
+  max-height: 80px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+#panel-selection .sel-events {
+  margin: 6px 0;
+  font-size: 11px;
+  color: var(--text-dim);
+  max-height: 60px;
+  overflow-y: auto;
+}
+
+#panel-selection .sel-events div {
+  padding: 1px 0;
+}
+
+#panel-selection .sel-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+#panel-selection .sel-actions button {
+  flex: 1;
+}
+
+/* === Production info in selection panel === */
+#panel-selection .sel-production {
+  margin: 6px 0;
+  font-size: 12px;
+}
+
+#panel-selection .sel-production .prod-bar {
+  width: 100%;
+  height: 6px;
+  background: #333;
+  border-radius: 3px;
+  margin: 2px 0;
+  overflow: hidden;
+}
+
+#panel-selection .sel-production .prod-bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+
+#panel-selection .sel-queue {
+  display: flex;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+#panel-selection .sel-queue span {
+  background: var(--secondary);
+  border-radius: 3px;
+  padding: 1px 6px;
+  font-size: 11px;
+}
+
+/* === Minimap (bottom-right) === */
+#minimap-container {
+  position: absolute;
+  bottom: 50px;
+  right: 10px;
+}
+
+#minimap-container canvas {
+  border-radius: var(--panel-radius);
+  border: 1px solid var(--panel-border);
+  cursor: pointer;
+}
+
+/* === Tab bar (bottom center) === */
+#tab-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  background: var(--panel-bg);
+  border-top: 1px solid var(--panel-border);
+}
+
+#tab-bar button {
+  padding: 6px 14px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 13px;
+  cursor: pointer;
+  position: relative;
+}
+
+#tab-bar button:hover {
+  color: var(--text);
+  background: rgba(255,255,255,0.05);
+}
+
+#tab-bar button.active {
+  color: var(--text);
+  border-color: var(--accent);
+  background: rgba(15, 52, 96, 0.3);
+}
+
+#tab-bar .badge {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background: var(--danger);
+  color: #fff;
+  font-size: 10px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+/* === Audio controls (top-right corner) === */
+#audio-controls {
+  position: absolute;
+  top: 10px;
+  right: 240px;
+  display: flex;
+  gap: 6px;
+}
+
+#audio-controls button {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text-dim);
+  font-size: 16px;
+  width: 32px;
+  height: 32px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+#audio-controls button:hover {
+  color: var(--text);
+}
+
+/* === Editor panel (bottom half) === */
+#editor-panel {
+  position: absolute;
+  bottom: 40px;
+  left: 0;
+  width: 100%;
+  height: 0;
+  background: var(--primary);
+  border-top: 2px solid var(--panel-border);
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  z-index: 10;
+}
+
+#editor-panel.open {
+  display: flex;
+}
+
+#editor-panel .editor-tabs {
+  display: flex;
+  align-items: center;
+  background: var(--secondary);
+  border-bottom: 1px solid var(--panel-border);
+  min-height: 32px;
+  overflow-x: auto;
+}
+
+#editor-panel .editor-tab {
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text-dim);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  border-right: 1px solid var(--panel-border);
+}
+
+#editor-panel .editor-tab:hover {
+  color: var(--text);
+}
+
+#editor-panel .editor-tab.active {
+  color: var(--text);
+  background: var(--primary);
+}
+
+#editor-panel .editor-tab .tab-close {
+  font-size: 14px;
+  color: var(--text-dim);
+  cursor: pointer;
+  line-height: 1;
+}
+
+#editor-panel .editor-tab .tab-close:hover {
+  color: var(--danger);
+}
+
+#editor-panel .editor-tab-new {
+  padding: 6px 12px;
+  font-size: 14px;
+  color: var(--text-dim);
+  border: none;
+  background: transparent;
+  cursor: pointer;
+}
+
+#editor-panel .editor-tab-new:hover {
+  color: var(--text);
+}
+
+#editor-panel .editor-body {
+  flex: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+#editor-panel .editor-body .CodeMirror {
+  height: 100%;
+  font-size: 13px;
+}
+
+#editor-panel .editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  background: var(--secondary);
+  border-top: 1px solid var(--panel-border);
+}
+
+/* === Editor resize handle === */
+#editor-resize-handle {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  height: 6px;
+  cursor: ns-resize;
+  z-index: 11;
+  background: transparent;
+  display: none;
+}
+
+#editor-resize-handle:hover,
+#editor-resize-handle.dragging {
+  background: var(--accent);
+}
+
+/* === Chat panel (right side) === */
+#chat-panel {
+  position: absolute;
+  top: 50px;
+  right: 10px;
+  width: 280px;
+  bottom: 50px;
+  display: none;
+  flex-direction: column;
+}
+
+#chat-panel.open {
+  display: flex;
+}
+
+#chat-panel .chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--panel-border);
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+#chat-panel .chat-close {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+#chat-panel .chat-messages {
+  flex: 1;
+  overflow-y: auto;
+  margin-bottom: 8px;
+  font-size: 12px;
+}
+
+#chat-panel .chat-messages .chat-msg {
+  padding: 2px 0;
+  word-break: break-word;
+}
+
+#chat-panel .chat-messages .chat-msg .chat-sender {
+  font-weight: bold;
+  margin-right: 4px;
+}
+
+#chat-panel .chat-messages .chat-msg.system {
+  color: var(--text-dim);
+  font-style: italic;
+}
+
+#chat-panel .chat-input-row {
+  display: flex;
+  gap: 4px;
+}
+
+#chat-panel .chat-input-row input {
+  flex: 1;
+  padding: 6px 8px;
+  background: var(--secondary);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+
+#chat-panel .chat-input-row button {
+  padding: 6px 10px;
+}
+
+/* === Scores panel === */
+#scores-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 320px;
+  display: none;
+}
+
+#scores-panel.open {
+  display: block;
+}
+
+#scores-panel .scores-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+#scores-panel .scores-close {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+#scores-panel .scores-table {
+  width: 100%;
+}
+
+#scores-panel .scores-table .score-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+  font-size: 13px;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+#scores-panel .scores-table .score-row.me {
+  color: var(--success);
+  font-weight: bold;
+}
+
+/* === Logs panel === */
+#logs-panel {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 500px;
+  max-height: 400px;
+  display: none;
+  flex-direction: column;
+}
+
+#logs-panel.open {
+  display: flex;
+}
+
+#logs-panel .logs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+#logs-panel .logs-close {
+  cursor: pointer;
+  background: none;
+  border: none;
+  color: var(--text-dim);
+  font-size: 16px;
+}
+
+#logs-panel .logs-body {
+  flex: 1;
+  overflow-y: auto;
+  font-family: monospace;
+  font-size: 11px;
+  max-height: 340px;
+}
+
+#logs-panel .log-entry {
+  padding: 1px 0;
+  white-space: pre-wrap;
+  word-break: break-all;
+}
+
+#logs-panel .log-entry.error {
+  color: var(--danger);
+}
+
+#logs-panel .log-entry.info {
+  color: var(--text-dim);
+}
+
+/* === Game over overlay === */
+#gameover-screen {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.8);
+  z-index: 50;
+}
+
+#gameover-screen.open {
+  display: flex;
+}
+
+#gameover-screen .go-title {
+  font-size: 48px;
+  margin-bottom: 12px;
+}
+
+#gameover-screen .go-subtitle {
+  font-size: 18px;
+  color: var(--text-dim);
+  margin-bottom: 24px;
+}
+
+#gameover-screen .go-scores {
+  margin-bottom: 24px;
+  font-size: 16px;
+  text-align: center;
+}
+
+#gameover-screen .go-scores div {
+  padding: 4px 0;
+}
+
+#gameover-screen .go-actions {
+  display: flex;
+  gap: 12px;
+}
+
+/* === Toast notifications === */
+#toast-container {
+  position: absolute;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  pointer-events: none;
+}
+
+.toast {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 8px 16px;
+  color: var(--text);
+  font-size: 13px;
+  animation: toast-fade 3s ease forwards;
+  pointer-events: auto;
+}
+
+.toast.error {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.toast.success {
+  border-color: var(--success);
+}
+
+@keyframes toast-fade {
+  0%   { opacity: 0; transform: translateY(-10px); }
+  10%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* === Game event popup (on map) === */
+.game-event-popup {
+  position: absolute;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--panel-radius);
+  padding: 6px 12px;
+  font-size: 12px;
+  color: var(--text);
+  pointer-events: none;
+  animation: popup-float 3s ease forwards;
+  z-index: 5;
+}
+
+@keyframes popup-float {
+  0%   { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-30px); }
+}
+
+/* === Buttons === */
+.btn {
+  padding: 6px 14px;
+  background: var(--accent);
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.btn:hover {
+  filter: brightness(1.2);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  background: var(--danger);
+}
+
+.btn-success {
+  background: var(--success);
+}
+
+/* === Scrollbar === */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--accent);
+  border-radius: 3px;
+}
+
+/* === Hidden utility === */
+.hidden {
+  display: none !important;
+}
