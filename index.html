@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeHex — Strategy. Code. Conquer.</title>
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- CodeMirror 5 via CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/theme/dracula.min.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/matchbrackets.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.18/addon/edit/closebrackets.min.js"></script>
+</head>
+<body>
+
+<div id="app">
+
+  <!-- === Login Screen === -->
+  <div id="login-screen">
+    <div class="login-title">&#x2B21; CodeHex</div>
+    <div class="login-subtitle">Strategy. Code. Conquer.</div>
+
+    <div class="login-form">
+      <label>
+        Server Address:
+        <input type="text" id="login-server" value="localhost:8080" placeholder="host:port">
+      </label>
+      <label>
+        Your Name:
+        <input type="text" id="login-name" value="Player" placeholder="Enter name" maxlength="32">
+      </label>
+      <button id="login-btn" class="login-btn">Connect</button>
+    </div>
+
+    <div class="recent-servers">
+      <h3>Recent servers:</h3>
+      <ul id="recent-servers-list"></ul>
+    </div>
+
+    <div id="login-status" class="login-status"></div>
+  </div>
+
+  <!-- === Loading Screen === -->
+  <div id="loading-screen">
+    <div class="loading-text">Loading assets...</div>
+    <div class="progress-bar-container">
+      <div class="progress-bar-fill"></div>
+    </div>
+  </div>
+
+  <!-- === Game Screen === -->
+  <div id="game-screen">
+
+    <!-- Canvas layers -->
+    <canvas id="canvas-game"></canvas>
+    <canvas id="canvas-fog"></canvas>
+    <canvas id="canvas-debug"></canvas>
+
+    <!-- UI layer -->
+    <div id="ui">
+
+      <!-- Resources (top-left) -->
+      <div id="panel-resources" class="panel"></div>
+
+      <!-- Status (top-right) -->
+      <div id="panel-status" class="panel"></div>
+
+      <!-- Audio controls -->
+      <div id="audio-controls"></div>
+
+      <!-- Selection panel (bottom-left) -->
+      <div id="panel-selection" class="panel"></div>
+
+      <!-- Minimap (bottom-right) -->
+      <div id="minimap-container">
+        <canvas id="canvas-minimap"></canvas>
+      </div>
+
+      <!-- Chat panel (right side) -->
+      <div id="chat-panel" class="panel">
+        <div class="chat-header">
+          <span>Chat</span>
+          <button class="chat-close">&#x00D7;</button>
+        </div>
+        <div class="chat-messages"></div>
+        <div class="chat-input-row">
+          <input type="text" placeholder="Type a message..." maxlength="200">
+          <button class="btn">&#x2192;</button>
+        </div>
+      </div>
+
+      <!-- Scores panel (center overlay) -->
+      <div id="scores-panel" class="panel">
+        <div class="scores-header">
+          <span>Scores</span>
+          <button class="scores-close">&#x00D7;</button>
+        </div>
+        <div class="scores-table"></div>
+      </div>
+
+      <!-- Logs panel (center overlay) -->
+      <div id="logs-panel" class="panel">
+        <div class="logs-header">
+          <span>Script Logs</span>
+          <button class="logs-close">&#x00D7;</button>
+        </div>
+        <div class="logs-body"></div>
+      </div>
+
+      <!-- Toast container -->
+      <div id="toast-container"></div>
+
+      <!-- Editor resize handle -->
+      <div id="editor-resize-handle"></div>
+
+      <!-- Editor panel (bottom half) -->
+      <div id="editor-panel">
+        <div class="editor-tabs"></div>
+        <div class="editor-body"></div>
+        <div class="editor-toolbar"></div>
+      </div>
+
+      <!-- Tab bar (bottom) -->
+      <div id="tab-bar">
+        <button data-tab="editor">&#x1F4DD; Editor</button>
+        <button data-tab="debug">&#x1F41B; Debug</button>
+        <button data-tab="chat">&#x1F4AC; Chat</button>
+        <button data-tab="scores">&#x1F4CA; Scores</button>
+        <button data-tab="logs">&#x1F4C4; Logs</button>
+      </div>
+
+    </div>
+
+    <!-- Game over overlay -->
+    <div id="gameover-screen">
+      <div class="go-title"></div>
+      <div class="go-subtitle"></div>
+      <div class="go-scores"></div>
+      <div class="go-actions"></div>
+    </div>
+
+  </div><!-- /game-screen -->
+
+</div><!-- /app -->
+
+<!-- === Client scripts (order matches dependency chain) === -->
+<script src="client/HexMath.js"></script>
+<script src="client/GameState.js"></script>
+<script src="client/Camera.js"></script>
+<script src="client/SpriteManager.js"></script>
+<script src="client/AudioManager.js"></script>
+<script src="client/HexRenderer.js"></script>
+<script src="client/FogRenderer.js"></script>
+<script src="client/Debugger.js"></script>
+<script src="client/Minimap.js"></script>
+<script src="client/Editor.js"></script>
+<script src="client/UI.js"></script>
+<script src="client/Connection.js"></script>
+
+<!-- === Initialization === -->
+<script>
+(function () {
+  'use strict';
+
+  // Resize canvases to match display size
+  function resizeCanvases() {
+    var canvases = [
+      document.getElementById('canvas-game'),
+      document.getElementById('canvas-fog'),
+      document.getElementById('canvas-debug')
+    ];
+    for (var i = 0; i < canvases.length; i++) {
+      var c = canvases[i];
+      if (c) {
+        c.width = window.innerWidth;
+        c.height = window.innerHeight;
+      }
+    }
+  }
+
+  window.addEventListener('resize', resizeCanvases);
+  resizeCanvases();
+
+  // Initialize all modules
+  var gameCanvas = document.getElementById('canvas-game');
+  var fogCanvas = document.getElementById('canvas-fog');
+  var debugCanvas = document.getElementById('canvas-debug');
+  var minimapCanvas = document.getElementById('canvas-minimap');
+
+  Camera.init(gameCanvas);
+  HexRenderer.init(gameCanvas);
+  FogRenderer.init(fogCanvas);
+  Debugger.init(debugCanvas);
+  Minimap.init(minimapCanvas);
+  Editor.init();
+  UI.init();
+  Connection.init();
+
+  // Show login screen
+  UI.showLoginScreen();
+
+  // Main render loop
+  function renderLoop() {
+    // Only render if game screen is visible
+    var gameScreen = document.getElementById('game-screen');
+    if (gameScreen && gameScreen.style.display !== 'none') {
+      HexRenderer.render();
+      FogRenderer.render();
+      Debugger.render();
+    }
+    requestAnimationFrame(renderLoop);
+  }
+
+  requestAnimationFrame(renderLoop);
+})();
+</script>
+
+</body>
+</html>
